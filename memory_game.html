@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Glow Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --app-bg: #e2e8eb;
+            --panel-bg: #ffffff;
+            --panel-dark: #1b353f;
+            --accent-yellow: #f8b454;
+            --accent-light: #fbe5cc;
+            --text-dark: #1b353f;
+            --text-muted: #7b949e;
+            
+            --success-neon: #f8b454;
+            --error-neon: #f26b6b;
+            --radius: 36px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Noto Sans Thai', sans-serif;
+            background: var(--app-bg);
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            padding: 20px;
+        }
+
+        /* Phone Screen Container */
+        .glass-panel {
+            background: var(--panel-bg);
+            padding: 40px 30px;
+            border-radius: var(--radius);
+            box-shadow: 0 20px 50px rgba(27, 53, 63, 0.1);
+            width: 100%;
+            max-width: 400px;
+            position: relative;
+            max-height: 95vh;
+            overflow-y: auto;
+            text-align: center;
+        }
+        .glass-panel::-webkit-scrollbar { width: 0; }
+
+        h1 { 
+            font-size: 2rem; 
+            margin-bottom: 8px; 
+            color: var(--text-dark);
+            line-height: 1.2;
+            text-align: left;
+        }
+        
+        .subtitle {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+            text-align: left;
+        }
+
+        /* Inputs & Buttons */
+        .input-group { margin-bottom: 20px; text-align: left; }
+        label { font-size: 0.9rem; color: var(--text-dark); display: block; margin-bottom: 10px; font-weight: 600; }
+
+        select, input {
+            width: 100%;
+            padding: 16px;
+            background: #f4f6f8;
+            border: 1px solid #e1e8eb;
+            border-radius: 16px;
+            color: var(--text-dark);
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+            font-family: 'Noto Sans Thai', sans-serif;
+        }
+        select:focus, input:focus { border-color: var(--accent-yellow); outline: none; box-shadow: 0 0 0 3px rgba(248, 180, 84, 0.15); }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 14px;
+            font-family: 'Noto Sans Thai', sans-serif;
+        }
+        .btn-primary { background: var(--accent-yellow); color: #fff; box-shadow: 0 8px 20px rgba(248, 180, 84, 0.3); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 25px rgba(248, 180, 84, 0.4); }
+        .btn-outline { background: var(--panel-dark); color: white; box-shadow: 0 8px 20px rgba(27, 53, 63, 0.2); }
+        .btn-outline:hover { transform: translateY(-2px); box-shadow: 0 12px 25px rgba(27, 53, 63, 0.3); }
+
+        /* Dark Card */
+        .card-dark {
+            background: var(--panel-dark);
+            color: white;
+            border-radius: 24px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        /* Game Header */
+        .sub-stage-indicator { display: flex; gap: 6px; justify-content: center; margin-top: 10px; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: #3c5663; transition: 0.3s; }
+        .dot.active { background: var(--accent-yellow); box-shadow: 0 0 10px rgba(248, 180, 84, 0.6); }
+
+        /* Grid */
+        .grid-container { display: grid; gap: 12px; margin: 20px auto; }
+        .grid-item {
+            background: var(--accent-light);
+            border-radius: 12px;
+            aspect-ratio: 1/1;
+            cursor: pointer;
+            border: none;
+            transition: transform 0.2s, background 0.3s, box-shadow 0.3s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        }
+
+        /* Animation */
+        .glow-active { 
+            background: #ffcc66 !important; 
+            box-shadow: 0 0 25px 8px rgba(248, 180, 84, 0.9), 0 0 15px 2px #fff !important; 
+            transform: scale(1.02); 
+            z-index: 10;
+            position: relative;
+        }
+        .glow-error {   
+            background: var(--error-neon) !important; 
+            box-shadow: 0 0 25px 8px rgba(229, 50, 50, 0.9), 0 0 15px 2px #fff !important; 
+            transform: scale(1.01); 
+            animation: shake 0.4s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0) scale(1.05); }
+            25% { transform: translateX(-4px) scale(1.05); }
+            75% { transform: translateX(4px) scale(1.05); }
+        }
+
+        /* Controls */
+        .game-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+        .btn-sm { padding: 14px; font-size: 0.9rem; border-radius: 16px; margin-bottom: 0px; }
+
+        /* Screen States */
+        .screen { display: none; animation: fadeIn 0.4s ease; }
+        .screen.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Leaderboard Modal style */
+        .list-container { max-height: 300px; overflow-y: auto; text-align: left; margin: 20px 0; }
+        .list-item { 
+            display: flex; 
+            justify-content: space-between; 
+            padding: 16px; 
+            background: #f4f6f8;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="menu-screen" class="glass-panel screen active">
+        <span style="color: var(--accent-yellow); font-size: 50px; font-weight: bold;">Memory Test</span> 
+        <br><br>
+        <div class="input-group">
+            <label>Name</label>
+            <input type="text" id="player-name" placeholder="Enter your name..." autocomplete="off">
+            <select id="recent-players">
+                <option value="">-- Select name --</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label>Map & Difficulty</label>
+            <div style="display: flex; gap: 10px;">
+                <select id="map-select">
+                    <option value="2x2">2x2</option>
+                    <option value="x">X</option>
+                    <option value="3x3">3x3</option>
+                    <option value="4x4">4x4</option>
+                    <option value="5x5">5x5</option>
+                    <option value="6x6">6x6</option>
+                </select>
+                <select id="difficulty-select">
+                    <option value="very_easy">Very Easy</option>
+                    <option value="easy">Easy</option>
+                    <option value="normal">Normal</option>
+                    <option value="hard">Hard</option>
+                    <option value="hell">Hell</option>
+                    <option value="rankup">Rank Up!</option>
+                </select>
+            </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="startGame()">Start Game</button>
+        <button class="btn btn-outline" onclick="showLeaderboard()">Leaderboard</button>
+    </div>
+
+    <div id="game-screen" class="glass-panel screen">
+        <div class="card-dark">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
+                <div style="text-align: left;">
+                    <div style="font-size: 0.8rem; color: #9ab4c2; margin-bottom: 4px;">STAGE</div>
+                    <div style="font-size: 2rem; font-weight: 700; line-height: 1;" id="display-stage">1</div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 0.8rem; color: #9ab4c2; margin-bottom: 4px;">LIVES</div>
+                    <div style="font-size: 1.5rem; font-weight: 600; line-height: 1; color: var(--error-neon);" id="display-lives">3</div>
+                </div>
+            </div>
+            
+            <div style="background: rgba(0,0,0,0.15); padding: 12px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 0.9rem; color: #9ab4c2;">Score</span>
+                <span style="font-size: 1.2rem; font-weight: 700; color: var(--accent-yellow);" id="display-score">0</span>
+            </div>
+            <div class="game-controls">
+                <button class="btn btn-outline btn-sm" onclick="togglePause()" id="pause-btn">Pause</button>
+                <button class="btn btn-sm" style="background: var(--error-neon); color: white;" onclick="endGame()">End Game</button>
+            </div>
+            
+            <div class="sub-stage-indicator">
+                <div class="dot" id="dot-1"></div>
+                <div class="dot" id="dot-2"></div>
+                <div class="dot" id="dot-3"></div>
+            </div>
+        </div>
+
+        <div id="status-text" style="font-size: 1rem; color: var(--text-dark); font-weight: 600; margin: 10px 0;">เตรียมตัว...</div>
+
+        <div id="grid-board" class="grid-container"></div>
+
+    </div>
+
+    <div id="lb-screen" class="glass-panel screen">
+        <h2 style="color: var(--text-dark); text-align: left; margin-bottom: 10px;">LEADERBOARD</h2>
+        <div id="lb-list" class="list-container"></div>
+        <button class="btn btn-primary" onclick="switchScreen('menu-screen')">Back to Menu</button>
+    </div>
+
+    <script>
+        const CONFIG = {
+            initialLives: 3,
+            repeatsPerLevel: 3,
+            mapConfigs: {
+                "2x2": { cols: 2, count: 4, mult: 1 },
+                "x":   { cols: 3, count: 9, isX: true, mult: 1.5 },
+                "3x3": { cols: 3, count: 9, mult: 1.8 },
+                "4x4": { cols: 4, count: 16, mult: 3 },
+                "5x5": { cols: 5, count: 25, mult: 5 },
+                "6x6": { cols: 6, count: 36, mult: 7 }
+            },
+            diffConfigs: {
+                "very_easy": { dots: 2, mult: 1 },
+                "easy":      { dots: 3, mult: 1.5 },
+                "normal":    { dots: 4, mult: 2 },
+                "hard":      { dots: 6, mult: 3 },
+                "hell":      { dots: 8, mult: 5 }
+            }
+        };
+
+        let state = {
+            playerName: "", stage: 1, subStage: 1, lives: 3, score: 0,
+            sequence: [], playerIdx: 0, isPlayerTurn: false, isPaused: false,
+            currentDots: 0, difficulty: "", map: ""
+        };
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function beep(f, t, d) {
+            const osc = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            osc.frequency.value = f; osc.type = t;
+            osc.connect(g); g.connect(audioCtx.destination);
+            osc.start(); g.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + d);
+            osc.stop(audioCtx.currentTime + d);
+        }
+
+        const Sound = {
+            glow: () => beep(500, 'sine', 0.2),
+            hit: () => beep(800, 'sine', 0.1),
+            fail: () => beep(150, 'sawtooth', 0.4),
+            win: () => { beep(600, 'sine', 0.1); setTimeout(()=>beep(900, 'sine', 0.2), 100); }
+        };
+
+        function switchScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function startGame() {
+            const nameInput = document.getElementById('player-name').value.trim();
+            if (!nameInput) return alert("Input your name");
+            
+            state = {
+                playerName: nameInput, stage: 1, subStage: 1, 
+                lives: CONFIG.initialLives, score: 0,
+                difficulty: document.getElementById('difficulty-select').value,
+                map: document.getElementById('map-select').value,
+                isPaused: false
+            };
+            
+            saveRecentPlayer(nameInput);
+            buildGrid();
+            switchScreen('game-screen');
+            startLevel();
+        }
+
+        function buildGrid() {
+            const board = document.getElementById('grid-board');
+            const conf = CONFIG.mapConfigs[state.map];
+            board.style.gridTemplateColumns = `repeat(${conf.cols}, 1fr)`;
+            board.innerHTML = '';
+
+            for(let i=0; i<conf.count; i++) {
+                const item = document.createElement('div');
+                item.className = 'grid-item';
+                item.dataset.index = i;
+                if(conf.isX && ![0,2,4,6,8].includes(i)) item.style.visibility = 'hidden';
+                item.onclick = () => handleInput(item);
+                board.appendChild(item);
+            }
+        }
+
+        function startLevel() {
+            updateUI();
+            state.isPlayerTurn = false;
+            state.playerIdx = 0;
+            
+            // Logic คำนวณจำนวนจุด
+            let baseDots = 0;
+            if(state.difficulty === 'rankup') {
+                baseDots = 2 + Math.floor((state.stage - 1) / 5);
+            } else {
+                baseDots = CONFIG.diffConfigs[state.difficulty].dots + (state.stage - 1);
+            }
+            state.currentDots = baseDots;
+
+            generateSequence();
+            playSequence();
+        }
+
+        function generateSequence() {
+            const items = Array.from(document.querySelectorAll('.grid-item')).filter(i => i.style.visibility !== 'hidden');
+            state.sequence = [];
+            for(let i=0; i<state.currentDots; i++) {
+                state.sequence.push(items[Math.floor(Math.random() * items.length)].dataset.index);
+            }
+        }
+
+        async function playSequence() {
+            if(state.isPaused) return;
+            document.getElementById('status-text').textContent = "Watch the sequence...";
+            await new Promise(r => setTimeout(r, 800));
+
+            for(const idx of state.sequence) {
+                if(state.isPaused) return;
+                const el = document.querySelector(`[data-index="${idx}"]`);
+                Sound.glow();
+                el.classList.add('glow-active');
+                await new Promise(r => setTimeout(r, 600));
+                el.classList.remove('glow-active');
+                await new Promise(r => setTimeout(r, 200));
+            }
+            state.isPlayerTurn = true;
+            document.getElementById('status-text').textContent = "It's your turn!";
+        }
+
+        function handleInput(el) {
+            if(!state.isPlayerTurn || state.isPaused) return;
+            
+            if(el.dataset.index === state.sequence[state.playerIdx]) {
+                Sound.hit();
+                el.classList.add('glow-active');
+                setTimeout(() => el.classList.remove('glow-active'), 200);
+                state.playerIdx++;
+
+                if(state.playerIdx === state.sequence.length) {
+                    state.isPlayerTurn = false;
+                    Sound.win();
+                    addScore();
+                    
+                    if(state.subStage < 3) {
+                        state.subStage++;
+                        setTimeout(startLevel, 1000);
+                    } else {
+                        state.subStage = 1;
+                        state.stage++;
+                        setTimeout(startLevel, 1500);
+                    }
+                }
+            } else {
+                state.isPlayerTurn = false;
+                Sound.fail();
+                el.classList.add('glow-error');
+                state.lives--;
+                updateUI();
+                setTimeout(() => {
+                    el.classList.remove('glow-error');
+                    if(state.lives <= 0) endGame();
+                    else playSequence();
+                }, 800);
+            }
+        }
+
+        function addScore() {
+            const diffMult = state.difficulty === 'rankup' ? 2 : CONFIG.diffConfigs[state.difficulty].mult;
+            const mapMult = CONFIG.mapConfigs[state.map].mult;
+            state.score += Math.floor((state.sequence.length * 10) * diffMult * mapMult);
+            updateUI();
+        }
+
+        function updateUI() {
+            document.getElementById('display-stage').textContent = state.stage;
+            document.getElementById('display-lives').textContent = "🧡".repeat(Math.max(0, state.lives));
+            document.getElementById('display-score').textContent = state.score;
+            
+            for(let i=1; i<=3; i++) {
+                document.getElementById(`dot-${i}`).classList.toggle('active', i <= state.subStage);
+            }
+        }
+
+        function togglePause() {
+            state.isPaused = !state.isPaused;
+            document.getElementById('pause-btn').textContent = state.isPaused ? "RESUME" : "PAUSE";
+            document.getElementById('status-text').textContent = state.isPaused ? "PAUSE" : "Press Resume to continue";
+            if(!state.isPaused && !state.isPlayerTurn) playSequence();
+        }
+
+        function endGame() {
+            saveScore();
+            alert(`End! Your score: ${state.score}`);
+            location.reload();
+        }
+
+        // Leaderboard & Storage
+        function saveRecentPlayer(name) {
+            let players = JSON.parse(localStorage.getItem('m_players') || '[]');
+            if(!players.includes(name)) players.unshift(name);
+            localStorage.setItem('m_players', JSON.stringify(players.slice(0,5)));
+        }
+
+        function saveScore() {
+            let lb = JSON.parse(localStorage.getItem('m_lb') || '[]');
+            lb.push({ name: state.playerName, score: state.score, date: new Date().toLocaleDateString() });
+            lb.sort((a,b) => b.score - a.score);
+            localStorage.setItem('m_lb', JSON.stringify(lb.slice(0,10)));
+        }
+
+        function showLeaderboard() {
+            const lb = JSON.parse(localStorage.getItem('m_lb') || '[]');
+            const list = document.getElementById('lb-list');
+            list.innerHTML = lb.map((i, idx) => `
+                <div class="list-item">
+                    <span>${idx+1}. ${i.name}</span>
+                    <span style="color:var(--success-neon)">${i.score}</span>
+                </div>
+            `).join('') || '<div style="text-align:center">No data</div>';
+            switchScreen('lb-screen');
+        }
+
+        // Init
+        window.onload = () => {
+            const players = JSON.parse(localStorage.getItem('m_players') || '[]');
+            const sel = document.getElementById('recent-players');
+            players.forEach(p => sel.innerHTML += `<option value="${p}">${p}</option>`);
+            sel.onchange = (e) => document.getElementById('player-name').value = e.target.value;
+        };
+    </script>
+</body>
+</html>
